@@ -1,6 +1,7 @@
 package twitter;
 
 import com.twitter.hbc.httpclient.BasicClient;
+import java.io.FileWriter;
 import twitter.files.FileUtils;
 import twitter.tweeutils.ClientSupplier;
 
@@ -18,26 +19,27 @@ public class TweeterReader {
         BlockingQueue<String> queue = new LinkedBlockingQueue<>(10000);
 
         BasicClient client = ClientSupplier.prepareAndConnectDefaultClient(CONSUMER_KEY,
-                                                                           CONSUMER_SECRET,
-                                                                           TOKEN,
-                                                                           SECRET,
-                                                                           queue);
+                CONSUMER_SECRET,
+                TOKEN,
+                SECRET,
+                queue);
 
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newScheduledThreadPool(10);
         int filesCount = 50;
         CountDownLatch doneSignal = new CountDownLatch(filesCount);
 
         for (int i = 0; i < filesCount; i++) {
-            executor.execute(()->{
+            executor.execute(() -> {
                 Random random = new Random();
                 File resultFile = FileUtils.createFile("C:\\temp\\result" + random.nextInt(100) + ".txt");
 
-                Integer rowCount = 0;
-                while (!client.isDone() && rowCount < 100){
-                    FileUtils.writeToFileFromQueue(resultFile, queue);
-                    rowCount++;
-                }
-                doneSignal.countDown();
+                FileUtils.writeToFile(resultFile, writer -> {
+                    Integer rowCount = 0;
+                    while (!client.isDone() && rowCount < 100) {
+                        writer.write(queue.take());
+                        rowCount++;
+                    }
+                }, doneSignal::countDown);
             });
         }
 
