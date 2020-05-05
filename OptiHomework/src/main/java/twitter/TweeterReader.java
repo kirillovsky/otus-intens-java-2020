@@ -45,6 +45,7 @@ public class TweeterReader {
 
         doneSignal.await();
         client.stop();
+        executor.shutdown();
     }
 
     public static void main(String[] args) throws Exception {
