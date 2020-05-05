@@ -3,27 +3,21 @@ package twitter.files;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Queue;
-import java.util.Random;
-import java.util.concurrent.BlockingQueue;
 
 public class FileUtils {
-    public static void writeToFileFromQueue(File file, BlockingQueue<String> queue){
-        if(file.canWrite()){
-            try {
-                FileWriter writer = new FileWriter(file);
-                writer.write(queue.take());
-                writer.flush();
-                writer.close();
-            } catch (IOException e) {
+    public static void writeToFile(File file, WriteToFileOperation doWrite, Runnable doFinally) {
+        if (file.canWrite()) {
+            try (FileWriter writer = new FileWriter(file)) {
+                doWrite.write(writer);
+            } catch (Exception e) {
                 e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } finally {
+                doFinally.run();
             }
         }
     }
 
-    public static File createFile(String path){
+    public static File createFile(String path) {
         File resultFile = new File(path);
         try {
             resultFile.createNewFile();
@@ -34,3 +28,4 @@ public class FileUtils {
         return resultFile;
     }
 }
+
